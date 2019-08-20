@@ -40,102 +40,103 @@ tags: JAVA 算法
 网上搜了一圈，用Java来实现海明码的例子很少，仅有的一篇文章我看了一下，代码比较粗糙，最终还是决定自己去实现一个，毕竟原理还是比较简单的。
 
 ```
-	/**
-	 * 这里剔除了优惠码的转换，只展示海明码的生成
-	 * @param src
-	 * @return
-	 */
-	private static String hmCode(String src) {
-		/*
-		 * 第一步先确定需要多少位校验码。 
-		 * 设数据有n位，校验码有x位。则校验码一共有2^x种取值方式。
-		 * 其中需要一种取值方式表示数据正确，剩下2^x−1种取值方式表示有一位数据出错。
-		 * 因为编码后的二进制串有n+x位，因此x应该满足：2^x−1>=n+x
-		 * 使不等式成立的x的最小值就是校验码的位数
-		 */
-		String[] source = src.split("");//JDK1.7该方法会多出第一位为null
-		int n = source.length;
-		int x = 0;
-		while((1<<x)-1<n+x) x++;
-		
-		byte[] finalary = new byte[n+x];//申请数存放最终数据的数组
-		
-		/*
-		 * 校验码在二进制串中的位置为2的整数幂，即１、2、4、8、16……..剩下的位置是信息码
-		 */
-		int[] index = new int[x];//记录校验码的位置
-		for(int i=0,xx=0,point=0,in=0;i<finalary.length;i++) {
-			if(1<<xx==i+1 && xx<=x) {
-				xx++;
-				index[in++] = i;
-			}else {
-				if(point<n) {
-					finalary[i] = Byte.parseByte(source[point++]);
-				}
-			}
-		}
-		
-		/*
-		 * 由于奇偶校验原理一样，偶校验的计算更为简单，实际中多用偶校验
-		 */
-		byte[] ver = new byte[x];//记录校验位的值
-		for(int p=0;p<x;p++) {
-			int verification = 0;
-			for(int i=1<<p;i<=finalary.length;i++) {
-				if(((i>>p)&1)==1) {
-					verification=verification^finalary[i-1];
-				}
-			}
-			ver[p] = (byte) (verification==0?0:1);
-		}
-		
-		/*
-		 * 校验码填进校验位
-		 */
-		for(int i=0;i<x;i++) {
-			finalary[index[i]]= ver[i];
-		}
-		
-		return finalary;
-	}
+/**
+ * 这里剔除了优惠码的转换，只展示海明码的生成
+ * @param src
+ * @return
+ */
+private static String hmCode(String src) {
+    /*
+     * 第一步先确定需要多少位校验码。 
+     * 设数据有n位，校验码有x位。则校验码一共有2^x种取值方式。
+     * 其中需要一种取值方式表示数据正确，剩下2^x−1种取值方式表示有一位数据出错。
+     * 因为编码后的二进制串有n+x位，因此x应该满足：2^x−1>=n+x
+     * 使不等式成立的x的最小值就是校验码的位数
+     */
+    String[] source = src.split("");//JDK1.7该方法会多出第一位为null
+    int n = source.length;
+    int x = 0;
+    while((1<<x)-1<n+x) x++;
+    
+    byte[] finalary = new byte[n+x];//申请数存放最终数据的数组
+    
+    /*
+     * 校验码在二进制串中的位置为2的整数幂，即１、2、4、8、16……..剩下的位置是信息码
+     */
+    int[] index = new int[x];//记录校验码的位置
+    for(int i=0,xx=0,point=0,in=0;i<finalary.length;i++) {
+        if(1<<xx==i+1 && xx<=x) {
+            xx++;
+            index[in++] = i;
+        }else {
+            if(point<n) {
+                finalary[i] = Byte.parseByte(source[point++]);
+            }
+        }
+    }
+    
+    /*
+     * 由于奇偶校验原理一样，偶校验的计算更为简单，实际中多用偶校验
+     */
+    byte[] ver = new byte[x];//记录校验位的值
+    for(int p=0;p<x;p++) {
+        int verification = 0;
+        for(int i=1<<p;i<=finalary.length;i++) {
+            if(((i>>p)&1)==1) {
+                verification=verification^finalary[i-1];
+            }
+        }
+        ver[p] = (byte) (verification==0?0:1);
+    }
+    
+    /*
+     * 校验码填进校验位
+     */
+    for(int i=0;i<x;i++) {
+        finalary[index[i]]= ver[i];
+    }
+    
+    return finalary;
+}
 ```
 
 ## 校验
 这里只做了校验合法性，海明码还支持找到错误位和修复错误（最多一位），我这里用不到就没有去实现，原理同样很简单。
 
 ```
-	public static boolean hmCheck(String src) {
-		String[] source = src.split("");
-		int n = source.length;
-		int x = 0;
-		while((1<<x)-1<n) x++;
-		
-		for(int p=0;p<x;p++) {
-			int verification = 0;
-			for(int i=1<<p;i<=n;i++) {
-				if(((i>>p)&1)==1) {
-					verification=verification^Integer.parseInt(source[i-1]);
-				}
-			}
-			if(verification!=0) {
-				return false;
-			}
-		}
-		
-		return true;
-	}
+public static boolean hmCheck(String src) {
+    String[] source = src.split("");
+    int n = source.length;
+    int x = 0;
+    while((1<<x)-1<n) x++;
+    
+    for(int p=0;p<x;p++) {
+        int verification = 0;
+        for(int i=1<<p;i<=n;i++) {
+            if(((i>>p)&1)==1) {
+                verification=verification^Integer.parseInt(source[i-1]);
+            }
+        }
+        if(verification!=0) {
+            return false;
+        }
+    }
+    
+    return true;
+}
 ```
 
 ## 运行
 
 ```
-	public static void main(String[] args) {	
-		System.out.println(Arrays.toString(hmCode("10110")));
-		System.out.println(hmCheck("011001100"));
-	}
+public static void main(String[] args) {	
+    System.out.println(Arrays.toString(hmCode("10110")));
+    System.out.println(hmCheck("011001100"));
+}
 ```
 
 结果为：
 
 >[0, 1, 1, 0, 0, 1, 1, 0, 0]
+>
 >true
